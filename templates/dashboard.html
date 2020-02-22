@@ -1,0 +1,43 @@
+{% extends "layout.html" %}
+{% block body %}
+
+    <h3>Dashboard</h3>
+    <hr>
+    <small ><b>Welcome,{{session["username"]}}! You can add or manage articles.</b></small> <br> <br>
+    <a href="/addarticle" class="btn btn-danger">Add Article</a><br><br>
+    
+    {% if article %}
+    <table class="table table-hover">
+        <thead>
+          <tr>
+            <th scope="col">ID</th>
+            <th scope="col">Header</th>
+            <th scope="col">Author</th>
+            <th scope="col">Public Date</th>
+            <th scope="col"></th>
+            <th scope="col"></th>
+
+          </tr>
+        </thead>
+        <tbody>
+          {% for post in article %}
+            <tr>
+            <th scope="row">{{post.id}}</th>
+            <td ><a href="/posts/{{post.id}}">{{post.title}}</a></td>
+            <td>{{post.author}}</td>
+            <td>{{post.date}}</td>
+            <td><a href="/edit/{{post.id}}" class="btn btn-primary">Update</a></td>
+            <td><a href="/delete/{{post.id}}" class="btn btn-dark">Delete</a></td> 
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+     
+
+
+    {% else %}
+    <div class="alert alert-danger">Not found any articles.</div>
+
+    {% endif %}
+
+{% endblock body %}

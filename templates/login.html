@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+{% block body %}
+{% from "includes/form_help.html" import render_field %}
+<div class="jumbotron text-center">
+    <h3>Login</h3>
+    <hr>
+    <form method="post">
+        <dl>
+        {{ render_field(form.username,class="form-control") }}
+        {{ render_field(form.password,class="form-control") }}
+        <button type="submit" class="btn btn-primary">Login</button>
+        </dl>
+
+</form>
+</div>
+{% endblock body %}

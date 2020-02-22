@@ -1,0 +1,19 @@
+{% extends "layout.html" %}
+{% block body %}
+{% if article  %}
+
+<ul class="list-group">
+    {% for post in article  %}
+    <li class="list-group-item"><a href="/posts/{{post.id}}">{{post.title}}</a></li>
+    
+    {% endfor %}
+</ul>
+
+
+{% else %}
+
+<div class = alert alert-danger>There are no articles in this blog yet</div>
+
+{% endif %}
+{% endblock body %}
+

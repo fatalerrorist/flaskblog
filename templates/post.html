@@ -1,0 +1,17 @@
+{% extends "layout.html" %}
+{% block body %}
+
+    {% if article %}
+      <h4 class="text-center">{{article.title}}</h4><hr><br>
+      
+      
+      <p>{{article.content|safe}}</p><hr><br>
+      <h6 class="text-left">{{article.author}}<small>-{{article.date}}</small></h6><br>
+    {% else %}
+     
+      <div class="alert alert-warning">Not Found</div>
+
+    {% endif %}
+
+
+{% endblock body %}
