@@ -4,6 +4,8 @@ from flask_mysqldb import MySQL
 from wtforms import Form,StringField,TextAreaField,PasswordField,validators
 from passlib.hash import sha256_crypt
 from functools import wraps
+
+#CONFIG
 app=Flask(__name__)
 app.secret_key="templateblog"
 
@@ -15,6 +17,20 @@ app.config["MYSQL_DB"] = "flaskblog"
 app.config["MYSQL_CURSORCLASS"]= "DictCursor"
 mysql= MySQL(app)
 
+#USER DECORATOR
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if "logged_in" in session: 
+            return f(*args, **kwargs)
+        
+        else:
+            
+            flash("Please Login for this page.","danger")
+            
+            return redirect(url_for("login"))
+    
+    return decorated_function
 
 #REGISTER FORM
 class form_register(Form):
@@ -57,6 +73,7 @@ def about():
 @app.route("/logout")
 def logout():
     session.clear()
+   
     return redirect(url_for("home"))
     
 @app.route("/login",methods =["GET","POST"])
@@ -73,17 +90,22 @@ def login():
         if result>0:
             data=cursor.fetchone()
             real_pass=data["password"]
+           
             if sha256_crypt.verify(password_entered,real_pass):
                 flash("Login Successful","success")
+                
                 session["logged_in"] = True
                 session["username"] = username
 
                 return redirect(url_for("home"))
+           
             else:
                 flash("Wrong Password","danger")
+                
                 return redirect(url_for("login"))
         else:
             flash("Wrong username","danger")
+           
             return redirect(url_for("login"))
      
     
@@ -112,20 +134,50 @@ def register():
     else:
         return render_template("register.html",form=form)
 
+
+
+
 @app.route("/projects")
 def projects():
     return render_template("projects.html")
 
-#USER DECORATOR
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if "logged_in" in session:
-            return f(*args, **kwargs)
+@app.route("/edit/<string:id>",methods=["GET","POST"])
+@login_required
+def update(id):
+    if request.method== "GET":
+        cursor=mysql.connection.cursor()
+
+        sorgu="SELECT * FROM article where id=%s and author=%s"
+        result=cursor.execute(sorgu,(id,session["username"]))
+        
+        if result==0:
+            flash("Not found or inaccessible","warning")
+            return redirect(url_for("home"))
         else:
-            flash("Please Login for this page.","danger")
-            return redirect(url_for("login"))
-    return decorated_function
+            article=cursor.fetchone()
+           
+            form = form_article()
+            form.title.data = article["title"]
+            form.content.data=article["content"]
+            
+            return render_template("update.html",form=form)
+
+
+    else:
+        form= form_article(request.form)
+        
+        newTitle = form.title.data
+        newContent = form.content.data
+        
+        query= "UPDATE article SET title=%s,content=%s WHERE id=%s"
+       
+        cursor=mysql.connection.cursor()
+        cursor.execute(query,(newTitle,newContent,id))
+        
+        mysql.connection.commit()
+        flash("Successfully Updated..","success")
+        return redirect(url_for("dashboard"))
+        
 
 @app.route("/dashboard")
 @login_required
@@ -133,7 +185,9 @@ def dashboard():
     cursor=mysql.connection.cursor()
     sorgu= "SELECT * FROM article where author=%s"
     result=cursor.execute(sorgu,(session["username"],))
+    
     if result > 0:
+        
         article=cursor.fetchall()
         return render_template("dashboard.html",article=article)
         
@@ -147,6 +201,7 @@ def posts():
     cursor=mysql.connection.cursor()
     query= "SELECT * FROM article"
     result=cursor.execute(query)
+    
     if result>0:
         article= cursor.fetchall()
 
@@ -160,12 +215,33 @@ def post(id):
     cursor=mysql.connection.cursor()
     query= "SELECT * FROM article WHERE id = %s"
     result=cursor.execute(query,(id,))
+    
     if result >0:
         article=cursor.fetchone()
         return render_template("post.html",article=article)
 
     else:
         return render_template("post.html")
+
+@app.route("/delete/<string:id>")
+@login_required
+def delete(id):
+    cursor=mysql.connection.cursor()
+    query="SELECT * FROM article WHERE author=%s AND id=%s"
+    result=cursor.execute(query,(session["username"],id))
+
+    if result>0:
+        
+        query2="DELETE FROM article WHERE id=%s"
+        cursor.execute(query2,(id,))
+        mysql.connection.commit()
+        
+        return redirect(url_for("dashboard"))
+    
+    else:
+        flash("Post not found or you have no permission for delete","danger")
+        return redirect(url_for("dashboard"))
+
 
 @app.route("/addarticle",methods = ["GET","POST"])
 def article():
@@ -186,6 +262,23 @@ def article():
     
 
     return render_template("addarticle.html",form=form)
+
+@app.route("/search", methods = ["GET","POST"])
+def search():
+    if request.method=="GET":
+        return redirect(url_for("home"))
+    else:
+        keyword = request.form.get("keyword")
+        cursor= mysql.connection.cursor()
+        query="SELECT * FROM article WHERE title LIKE '%" + str(keyword) + "%' "
+        result=cursor.execute(query)
+        
+        if result==0:
+            flash("Not Found","warning")
+            return redirect(url_for("posts"))
+        else:
+            article=cursor.fetchall()
+            return render_template("posts.html",article=article)
 
 #RUN
 if __name__=="__main__":

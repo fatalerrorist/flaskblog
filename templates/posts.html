@@ -1,14 +1,18 @@
 {% extends "layout.html" %}
 {% block body %}
 {% if article  %}
-
-<ul class="list-group">
+<form action="/search" method="post">
+    <input type="text" name="keyword" class="input-sm" maxlength="64" placeholder="Search">
+    <button type="submit" class="btn btn-danger">Search</button>
+    <hr>
+    <ul class="list-group">
+    
     {% for post in article  %}
     <li class="list-group-item"><a href="/posts/{{post.id}}">{{post.title}}</a></li>
     
     {% endfor %}
-</ul>
-
+    </ul>
+</form>
 
 {% else %}
 
