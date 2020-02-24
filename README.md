@@ -16,7 +16,7 @@ A simple blog project.I just made the backend section for additions to the front
 
 ### Future Plans
 
-- [ ] User Profile Section
+- [ ] User Profile Section 
 - [ ] Star system model
 - [ ] Other users can show your profile
 - [ ] Comment section
